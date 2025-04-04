@@ -1,9 +1,134 @@
+// Проверка доступности localStorage
+function isLocalStorageAvailable() {
+    try {
+        const test = 'test';
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        return true;
+    } catch (e) {
+        console.error('localStorage недоступен:', e);
+        return false;
+    }
+}
+
+// Проверка существования пользователя
+function userExists(username) {
+    if (!isLocalStorageAvailable()) return false;
+    
+    try {
+        const users = JSON.parse(localStorage.getItem('sealUsers') || '{}');
+        return users.hasOwnProperty(username);
+    } catch (e) {
+        console.error('Ошибка при проверке существования пользователя:', e);
+        return false;
+    }
+}
+
+// Регистрация нового пользователя
+function registerUser(username, email, password) {
+    if (!isLocalStorageAvailable()) {
+        console.warn('localStorage недоступен, регистрация невозможна');
+        return false;
+    }
+    
+    try {
+        // Загрузка списка пользователей
+        const users = JSON.parse(localStorage.getItem('sealUsers') || '{}');
+        
+        // Проверка, существует ли уже пользователь
+        if (users.hasOwnProperty(username)) {
+            return false;
+        }
+        
+        // Проверка уникальности email
+        for (const user in users) {
+            if (users[user].email === email) {
+                return false;
+            }
+        }
+        
+        // Создание нового пользователя
+        users[username] = {
+            email: email,
+            password: password, // В реальном приложении пароль должен быть хэширован!
+        };
+        
+        // Сохранение обновленного списка пользователей
+        localStorage.setItem('sealUsers', JSON.stringify(users));
+        
+        // Создание данных игрока
+        const userData = { 
+            username: username, 
+            email: email,
+            score: 0, 
+            autoTappers: 0, 
+            tapMultiplier: 1,
+            isLoggedIn: true
+        };
+        
+        // Сохранение данных игрока
+        localStorage.setItem(`sealUser_${username}`, JSON.stringify(userData));
+        
+        return userData;
+    } catch (e) {
+        console.error('Ошибка при регистрации пользователя:', e);
+        return false;
+    }
+}
+
+// Аутентификация пользователя
+function authenticateUser(username, password) {
+    if (!isLocalStorageAvailable()) {
+        console.warn('localStorage недоступен, аутентификация невозможна');
+        return false;
+    }
+    
+    try {
+        // Загрузка списка пользователей
+        const users = JSON.parse(localStorage.getItem('sealUsers') || '{}');
+        
+        // Проверка существования пользователя и правильности пароля
+        if (users.hasOwnProperty(username) && users[username].password === password) {
+            return loadUser(username);
+        }
+        
+        return false;
+    } catch (e) {
+        console.error('Ошибка при аутентификации пользователя:', e);
+        return false;
+    }
+}
+
 // Загрузка данных пользователя из localStorage или создание нового пользователя
 function loadUser(username) {
-    const savedUser = localStorage.getItem(`sealUser_${username}`);
-    if (savedUser) {
-        return JSON.parse(savedUser);
-    } else {
+    if (!isLocalStorageAvailable()) {
+        console.warn('localStorage недоступен, используем временные данные');
+        return { 
+            username: username, 
+            score: 0, 
+            autoTappers: 0, 
+            tapMultiplier: 1,
+            isLoggedIn: true
+        };
+    }
+    
+    try {
+        const savedUser = localStorage.getItem(`sealUser_${username}`);
+        if (savedUser) {
+            const userData = JSON.parse(savedUser);
+            userData.isLoggedIn = true;
+            return userData;
+        } else {
+            return { 
+                username: username, 
+                score: 0, 
+                autoTappers: 0, 
+                tapMultiplier: 1,
+                isLoggedIn: true
+            };
+        }
+    } catch (e) {
+        console.error('Ошибка при загрузке данных пользователя:', e);
         return { 
             username: username, 
             score: 0, 
@@ -16,11 +141,22 @@ function loadUser(username) {
 
 // Сохранение данных пользователя
 function saveUser(user) {
-    localStorage.setItem(`sealUser_${user.username}`, JSON.stringify(user));
+    if (!isLocalStorageAvailable()) {
+        console.warn('localStorage недоступен, данные не сохранены');
+        return;
+    }
+    
+    try {
+        localStorage.setItem(`sealUser_${user.username}`, JSON.stringify(user));
+    } catch (e) {
+        console.error('Ошибка при сохранении данных пользователя:', e);
+    }
 }
 
 // При загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Страница загружена');
+    
     // Получение элементов DOM
     const loginSection = document.getElementById('login-section');
     const gameSection = document.getElementById('game-section');
@@ -29,9 +165,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const tapButton = document.getElementById('tapButton');
     const scoreDisplay = document.getElementById('score');
     const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
     const loginButton = document.getElementById('loginButton');
+    const registerButton = document.getElementById('registerButton');
     const userDisplay = document.getElementById('userDisplay');
     const shopContainer = document.getElementById('shop');
+    const authMessage = document.getElementById('authMessage');
+
+    // Проверка наличия всех элементов DOM
+    if (!loginSection || !gameSection || !sealImage || !autoTapperButton || !tapButton || 
+        !scoreDisplay || !usernameInput || !emailInput || !passwordInput || !loginButton || 
+        !registerButton || !userDisplay || !shopContainer || !authMessage) {
+        console.error('Не все элементы DOM найдены');
+    }
 
     // Объявление пользователя
     let user = null;
@@ -61,11 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Обновление изображения тюленя в зависимости от прогресса
     function updateSealImage() {
         if (user.score < 1000) {
-            sealImage.src = "сема.png";
+            sealImage.src = "https://placehold.co/200x200?text=Малыш+Тюлень";
         } else if (user.score < 10000) {
-            sealImage.src = "ChatGPT Image 3 апр. 2025 г., 20_53_19.png";
+            sealImage.src = "https://placehold.co/200x200?text=Средний+Тюлень";
         } else {
-            sealImage.src = "ChatGPT Image 3 апр. 2025 г., 20_32_03.png";
+            sealImage.src = "https://placehold.co/200x200?text=Большой+Тюлень";
         }
     }
 
@@ -83,15 +230,78 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // Обработчик входа
-    loginButton.addEventListener('click', () => {
+    // Показать сообщение аутентификации
+    function showAuthMessage(message, isError = true) {
+        authMessage.textContent = message;
+        authMessage.style.color = isError ? 'red' : 'green';
+        
+        // Автоматически скрыть сообщение через 3 секунды
+        setTimeout(() => {
+            authMessage.textContent = '';
+        }, 3000);
+    }
+
+    // Обработчик регистрации
+    registerButton.addEventListener('click', () => {
+        console.log('Кнопка регистрации нажата');
         const username = usernameInput.value.trim();
-        if (username) {
-            user = loadUser(username);
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        if (!username || !email || !password) {
+            showAuthMessage('Пожалуйста, заполните все поля');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showAuthMessage('Пароль должен содержать не менее 6 символов');
+            return;
+        }
+        
+        if (!email.includes('@') || !email.includes('.')) {
+            showAuthMessage('Введите корректный адрес электронной почты');
+            return;
+        }
+        
+        if (userExists(username)) {
+            showAuthMessage('Пользователь с таким именем уже существует');
+            return;
+        }
+        
+        const userData = registerUser(username, email, password);
+        if (userData) {
+            user = userData;
             userDisplay.textContent = `Привет, ${user.username}!`;
             loginSection.style.display = 'none';
             gameSection.style.display = 'block';
             updateUI();
+            console.log('Пользователь зарегистрирован:', username);
+        } else {
+            showAuthMessage('Ошибка при регистрации. Возможно, email уже используется.');
+        }
+    });
+
+    // Обработчик входа
+    loginButton.addEventListener('click', () => {
+        console.log('Кнопка входа нажата');
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        if (!username || !password) {
+            showAuthMessage('Пожалуйста, введите имя пользователя и пароль');
+            return;
+        }
+        
+        const userData = authenticateUser(username, password);
+        if (userData) {
+            user = userData;
+            userDisplay.textContent = `Привет, ${user.username}!`;
+            loginSection.style.display = 'none';
+            gameSection.style.display = 'block';
+            updateUI();
+            console.log('Пользователь вошел:', username);
+        } else {
+            showAuthMessage('Неверное имя пользователя или пароль');
         }
     });
 
