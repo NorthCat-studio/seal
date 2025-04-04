@@ -1,4 +1,3 @@
-
 // Загрузка данных пользователя из localStorage или создание нового пользователя
 function loadUser(username) {
     const savedUser = localStorage.getItem(`sealUser_${username}`);
