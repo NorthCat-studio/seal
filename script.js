@@ -1,92 +1,205 @@
 
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 20px;
+// Загрузка данных пользователя из localStorage или создание нового пользователя
+function loadUser(username) {
+    const savedUser = localStorage.getItem(`sealUser_${username}`);
+    if (savedUser) {
+        return JSON.parse(savedUser);
+    } else {
+        return { 
+            username: username, 
+            score: 0, 
+            autoTappers: 0, 
+            tapMultiplier: 1,
+            isLoggedIn: true
+        };
+    }
 }
 
-.container {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  margin: auto;
+// Сохранение данных пользователя
+function saveUser(user) {
+    localStorage.setItem(`sealUser_${user.username}`, JSON.stringify(user));
 }
 
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px;
-  margin: 5px;
-  border-radius: 5px;
-  cursor: pointer;
-}
+// При загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    // Получение элементов DOM
+    const loginSection = document.getElementById('login-section');
+    const gameSection = document.getElementById('game-section');
+    const sealImage = document.getElementById('sealImage');
+    const autoTapperButton = document.getElementById('autoTapperButton');
+    const tapButton = document.getElementById('tapButton');
+    const scoreDisplay = document.getElementById('score');
+    const usernameInput = document.getElementById('username');
+    const loginButton = document.getElementById('loginButton');
+    const userDisplay = document.getElementById('userDisplay');
+    const shopContainer = document.getElementById('shop');
 
-button:hover {
-  background-color: #0056b3;
-}
+    // Объявление пользователя
+    let user = null;
 
-input {
-  padding: 8px;
-  margin: 5px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
+    // Предметы для магазина
+    const items = Array.from({ length: 10 }, (_, i) => ({
+        name: `Тюлень №${i + 1}`,
+        cost: (i + 1) * 80,
+        income: (i + 1) * 2
+    }));
 
-.seal-img {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  border: 3px solid #333;
-  margin: 10px;
-  cursor: pointer;
-  transition: transform 0.1s ease-in-out;
-}
+    // Множители для тапа
+    const multipliers = [
+        { cost: 500, value: 2 },
+        { cost: 1000, value: 4 },
+        { cost: 5000, value: 8 },
+        { cost: 10000, value: 16 }
+    ];
 
-.seal-img:active {
-  transform: scale(0.95);
-}
+    // Обновление интерфейса
+    function updateUI() {
+        scoreDisplay.textContent = `Монеты: ${user.score}`;
+        updateSealImage();
+        renderShop();
+    }
 
-.shop-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
-  max-height: 300px;
-  overflow-y: auto;
-}
+    // Обновление изображения тюленя в зависимости от прогресса
+    function updateSealImage() {
+        if (user.score < 1000) {
+            sealImage.src = "сема.png";
+        } else if (user.score < 10000) {
+            sealImage.src = "ChatGPT Image 3 апр. 2025 г., 20_53_19.png";
+        } else {
+            sealImage.src = "ChatGPT Image 3 апр. 2025 г., 20_32_03.png";
+        }
+    }
 
-.shop-card {
-  background: #f0f0f0;
-  padding: 10px;
-  border-radius: 5px;
-  transition: all 0.2s ease-in-out;
-}
+    // Создание анимации монеты
+    function createCoinAnimation(x, y, amount) {
+        const coin = document.createElement('div');
+        coin.className = 'coin-animation';
+        coin.style.left = `${x}px`;
+        coin.style.top = `${y}px`;
+        coin.textContent = `+${amount}`;
+        document.body.appendChild(coin);
+        
+        setTimeout(() => {
+            document.body.removeChild(coin);
+        }, 1000);
+    }
 
-.shop-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+    // Обработчик входа
+    loginButton.addEventListener('click', () => {
+        const username = usernameInput.value.trim();
+        if (username) {
+            user = loadUser(username);
+            userDisplay.textContent = `Привет, ${user.username}!`;
+            loginSection.style.display = 'none';
+            gameSection.style.display = 'block';
+            updateUI();
+        }
+    });
 
-.coin-animation {
-  position: absolute;
-  font-weight: bold;
-  animation: floatUp 1s ease-out forwards;
-  user-select: none;
-  pointer-events: none;
-}
+    // Обработчик клика по тюленю
+    sealImage.addEventListener('click', (e) => {
+        const amount = user.tapMultiplier;
+        user.score += amount;
+        saveUser(user);
+        updateUI();
+        
+        // Создание анимации монеты
+        createCoinAnimation(e.clientX, e.clientY, amount);
+    });
 
-@keyframes floatUp {
-  0% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-40px);
-  }
-}
+    // Альтернативная кнопка для тапа (мобильные устройства)
+    tapButton.addEventListener('click', () => {
+        const amount = user.tapMultiplier;
+        user.score += amount;
+        saveUser(user);
+        updateUI();
+        
+        // Создание анимации монеты в центре кнопки
+        const rect = tapButton.getBoundingClientRect();
+        createCoinAnimation(rect.left + rect.width/2, rect.top, amount);
+    });
+
+    // Обработчик покупки авто-таппера
+    autoTapperButton.addEventListener('click', () => {
+        if (user.score >= 50) {
+            user.score -= 50;
+            user.autoTappers++;
+            saveUser(user);
+            updateUI();
+        }
+    });
+
+    // Рендеринг магазина
+    function renderShop() {
+        shopContainer.innerHTML = '';
+        
+        // Создание карточек предметов
+        items.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.classList.add('shop-card');
+            card.innerHTML = `
+                <h3>${item.name}</h3>
+                <p>Цена: ${item.cost} монет</p>
+                <p>Доход: +${item.income}/сек</p>
+                <button class="buy-item-btn" data-index="${index}">Купить</button>
+            `;
+            shopContainer.appendChild(card);
+        });
+        
+        // Создание карточек множителей
+        multipliers.forEach((multiplier, index) => {
+            const card = document.createElement('div');
+            card.classList.add('shop-card');
+            card.innerHTML = `
+                <h3>Множитель x${multiplier.value}</h3>
+                <p>Цена: ${multiplier.cost} монет</p>
+                <button class="buy-multiplier-btn" data-index="${index}">Купить</button>
+            `;
+            shopContainer.appendChild(card);
+        });
+        
+        // Добавление обработчиков событий для кнопок покупки
+        document.querySelectorAll('.buy-item-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                buyItem(index);
+            });
+        });
+        
+        document.querySelectorAll('.buy-multiplier-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                buyMultiplier(index);
+            });
+        });
+    }
+
+    // Функция покупки предмета
+    function buyItem(index) {
+        if (user.score >= items[index].cost) {
+            user.score -= items[index].cost;
+            user.autoTappers += items[index].income;
+            saveUser(user);
+            updateUI();
+        }
+    }
+
+    // Функция покупки множителя
+    function buyMultiplier(index) {
+        if (user.score >= multipliers[index].cost) {
+            user.score -= multipliers[index].cost;
+            user.tapMultiplier = multipliers[index].value;
+            saveUser(user);
+            updateUI();
+        }
+    }
+
+    // Автоматическое начисление монет от авто-тапперов
+    setInterval(() => {
+        if (user) {
+            user.score += user.autoTappers;
+            saveUser(user);
+            updateUI();
+        }
+    }, 1000);
+});
