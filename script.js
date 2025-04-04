@@ -208,11 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Обновление изображения тюленя в зависимости от прогресса
     function updateSealImage() {
         if (user.score < 1000) {
-            sealImage.src = "https://placehold.co/200x200?text=Малыш+Тюлень";
+            sealImage.src = "сема.png";
         } else if (user.score < 10000) {
-            sealImage.src = "https://placehold.co/200x200?text=Средний+Тюлень";
+            sealImage.src = "ChatGPT Image 3 апр. 2025 г., 20_53_19.png";
         } else {
-            sealImage.src = "https://placehold.co/200x200?text=Большой+Тюлень";
+            sealImage.src = "ChatGPT Image 3 апр. 2025 г., 20_32_03.png";
         }
     }
 
