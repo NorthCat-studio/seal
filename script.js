@@ -1,108 +1,92 @@
-const user = JSON.parse(localStorage.getItem('sealUser')) || { username: '', score: 0, autoTappers: 0, tapMultiplier: 1 };
 
-function saveUser() {
-    localStorage.setItem('sealUser', JSON.stringify(user));
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 20px;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const sealImage = document.getElementById('sealImage');
-    const autoTapperButton = document.getElementById('autoTapperButton');
-    const scoreDisplay = document.getElementById('score');
-    const usernameInput = document.getElementById('username');
-    const loginButton = document.getElementById('loginButton');
-    const userDisplay = document.getElementById('userDisplay');
-    const shopContainer = document.getElementById('shop');
+.container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: auto;
+}
 
-    const items = Array.from({ length: 50 }, (_, i) => ({
-        name: `Тюлень №${i + 1}`,
-        cost: (i + 1) * 80,
-        income: (i + 1) * 2
-    }));
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
 
-    const multipliers = [
-        { cost: 500, value: 2 },
-        { cost: 1000, value: 4 },
-        { cost: 5000, value: 8 },
-        { cost: 10000, value: 16 }
-    ];
+button:hover {
+  background-color: #0056b3;
+}
 
-    function updateUI() {
-        scoreDisplay.textContent = `Монеты: ${user.score}`;
-     
-        updateSealImage();
-        renderShop();
-    }
+input {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
 
-    function updateSealImage() {
-        if (user.score < 5000) {
-            sealImage.src = 'ChatGPT Image 3 апр. 2025 г., 20_53_19.png';
-        } else if (user.score < 100000) {
-            sealImage.src = 'ChatGPT Image 3 апр. 2025 г., 20_32_03.png';
-        } else {
-            sealImage.src = 'ChatGPT Image 3 апр. 2025 г., 20_32_03.png';
-        }
-    }
+.seal-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 3px solid #333;
+  margin: 10px;
+  cursor: pointer;
+  transition: transform 0.1s ease-in-out;
+}
 
-    loginButton.addEventListener('click', () => {
-        user.username = usernameInput.value;
-        saveUser();
-        updateUI();
-    });
+.seal-img:active {
+  transform: scale(0.95);
+}
 
-    sealImage.addEventListener('click', () => {
-        user.score += user.tapMultiplier;
-        saveUser();
-        updateUI();
-    });
+.shop-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
 
-    autoTapperButton.addEventListener('click', () => {
-        if (user.score >= 50) {
-            user.score -= 50;
-            user.autoTappers++;
-            saveUser();
-            updateUI();
-        }
-    });
+.shop-card {
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 5px;
+  transition: all 0.2s ease-in-out;
+}
 
-    function renderShop() {
-        shopContainer.innerHTML = '';
-        items.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.classList.add('shop-card');
-            card.innerHTML = `<h3>${item.name}</h3><p>Цена: ${item.cost} монет</p><p>Доход: +${item.income}/сек</p><button onclick='buyItem(${index})'>Купить</button>`;
-            shopContainer.appendChild(card);
-        });
-        multipliers.forEach((multiplier, index) => {
-            const card = document.createElement('div');
-            card.classList.add('shop-card');
-            card.innerHTML = `<h3>Множитель x${multiplier.value}</h3><p>Цена: ${multiplier.cost} монет</p><button onclick='buyMultiplier(${index})'>Купить</button>`;
-            shopContainer.appendChild(card);
-        });
-    }
+.shop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-    window.buyItem = function(index) {
-        if (user.score >= items[index].cost) {
-            user.score -= items[index].cost;
-            user.autoTappers += items[index].income;
-            saveUser();
-            updateUI();
-        }
-    };
+.coin-animation {
+  position: absolute;
+  font-weight: bold;
+  animation: floatUp 1s ease-out forwards;
+  user-select: none;
+  pointer-events: none;
+}
 
-    window.buyMultiplier = function(index) {
-        if (user.score >= multipliers[index].cost) {
-            user.score -= multipliers[index].cost;
-            user.tapMultiplier = multipliers[index].value;
-            saveUser();
-            updateUI();
-        }
-    };
-
-    setInterval(() => {
-        user.score += user.autoTappers;
-        saveUser();
-        updateUI();
-    }, 1000);
-
-    updateUI();
-});
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
