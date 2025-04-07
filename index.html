@@ -4,40 +4,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тюлень Комбинат</title>
-    <link rel="stylesheet" href="./styles.css">
+    <title>Текст по центру</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        #text {
+            font-size: 60px; /* Размер текста */
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        #text.visible {
+            opacity: 1;
+        }
+        .button {
+            margin-top: 80px;
+            padding: 20px 40px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        #container {
+            text-align: center;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: white;
+            text-align: center;
+            background: linear-gradient(45deg, #ffea00, #0000ff);
+            background-size: 400% 400%;
+            animation: gradientAnimation 8s ease infinite;
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Тюлень Комбинат</h1>
-        <div id="login-section">
-            <p id="userDisplay"></p>
-            <div class="form-group">
-                <input type="text" id="username" placeholder="Имя пользователя" required>
-            </div>
-            <div class="form-group">
-                <input type="email" id="email" placeholder="Почта" required>
-            </div>
-            <div class="form-group">
-                <input type="password" id="password" placeholder="Пароль" required>
-            </div>
-            <div class="buttons">
-                <button id="loginButton">Войти</button>
-                <button id="registerButton">Регистрация</button>
-            </div>
-            <p id="authMessage" class="auth-message"></p>
-        </div>
-        <div id="game-section" style="display: none;">
-            <p id="score">Монеты: 0</p>
-            <div class="seal-container">
-                <img id="sealImage" src="https://placehold.co/200x200" class="seal-img" alt="Тюлень">
-            </div>
-            <button id="tapButton">Тапать</button>
-            <button id="autoTapperButton">Купить авто-тапер (50 монет)</button>
-            <h2>Магазин</h2>
-            <div id="shop" class="shop-container"></div>
-        </div>
+    <div id="container">
+        <div id="text" class="visible">Спасибо тем кто был на сайте и играл😢 Тюлень комбинат закрыт</div>
+        <button class="button" id="continueButton">Продолжить</button>
     </div>
-    <script src="./script.js"></script>
+    <script>
+        const text = document.getElementById("text");
+        const button = document.getElementById("continueButton");
+
+        button.addEventListener("click", () => {
+            text.classList.remove("visible");
+            setTimeout(() => {
+                text.textContent = "Спасибо за посещение!";
+                text.classList.add("visible");
+                button.textContent = "Закрыть страницу";
+                button.onclick = () => window.close();
+            }, 1000); // Задержка перед появлением нового текста
+        });
+
+        // Показать первый текст с анимацией
+        window.onload = () => {
+            text.classList.add("visible");
+        };
+    </script>
 </body>
 </html>
